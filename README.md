@@ -1,96 +1,74 @@
 # ARL Autonomous Vehicle Control Track
 
-**Autotronics Research Lab (ARL) — Ain Shams University**  
-*Course: Autonomous Vehicles & Drive-by-Wire Systems | Individual Project*
-
-<p align="center">
-  <img src="assets/demo.gif" alt="Autonomous Vehicle Simulation Demo" width="100%" />
-</p>
+**Student:** Raghad Mohamed
+**University:** Ain Shams University
+**id:** 2500099
+**Project Scope:** Milestones 1–5.2
 
 ---
 
-## 🧠 What Is This Project About?
+## 1. Project Overview
 
-In this project you will build the control system for a self-driving car in a ROS 2 simulation. The car drives around a racetrack and your job is to make it stay on the path, control its speed, and complete laps as fast and accurately as possible.
+This project focuses on developing and understanding the main components of an autonomous vehicle control system using ROS 2 and a simulated kinematic bicycle model.
 
-You will work through a series of milestones, each building on the last:
+The project starts with exploring the ROS 2 communication system and understanding the vehicle's state and actuator commands. It then progresses to implementing a bicycle model, connecting keyboard teleoperation to the simulated vehicle, developing longitudinal PID control, generating curvature-based target speeds, and implementing lateral PID steering control.
 
-1. **Explore the system** — Learn what topics the car publishes and subscribes to.
-2. **Bring the car to life** — Implement the physics equations that describe how the car moves.
-3. **Drive it manually** — Build a keyboard teleoperation node to drive the car yourself.
-4. **Add cruise control** — Implement a PID speed controller so the car holds a steady speed.
-5. **Make it autonomous** — Implement three different steering controllers (Lateral PID, Pure Pursuit, and MPC) so the car drives itself around the track.
-6. **Monitor performance** — Build a lap analyzer that logs lap times, tracking error, and shows live graphs and 3D overlays in RViz.
-7. **Report your results** — Compare your controllers and document your findings.
+The objective is to understand how vehicle modeling, feedback control, and path-related information work together to control a simulated autonomous vehicle.
 
-The car model is realistic: it has velocity as a state (not a direct input), meaning it accelerates and decelerates due to drag and friction — just like a real vehicle.
+**The current project scope ends at Milestone 5.2, Lateral PID Control.** Pure Pursuit, Model Predictive Control (MPC), lap analysis, and later milestones are outside the scope of the current implementation.
 
+## 2. Project Objectives
 
+* Understand ROS 2 nodes, topics, messages, and communication between system components.
+* Explore the vehicle simulation and its state and actuator interfaces.
+* Understand and implement the kinematic bicycle model.
+* Control the simulated vehicle through keyboard teleoperation.
+* Implement longitudinal PID control for speed regulation.
+* Generate target speeds based on road curvature and lateral acceleration limits.
+* Implement lateral PID control to reduce the vehicle's cross-track error.
+* Test the implemented components and document their behavior and limitations.
 
----
+## 3. System Architecture
 
+The project is organized into three ROS 2 packages.
 
+| Package             | Main responsibility                                                  |
+| ------------------- | -------------------------------------------------------------------- |
+| `bicycle_sim`       | Vehicle simulation and kinematic bicycle model                       |
+| `bicycle_control`   | Teleoperation, longitudinal PID, velocity profiling, and lateral PID |
+| `track_environment` | Track representation and related environment functionality           |
 
----
+### Main Components
 
-## 🚀 Quickstart
+**1. Vehicle Model**
 
-### 1. Build the Workspace
-```bash
-# Source ROS 2 Humble
-source /opt/ros/humble/setup.bash
+The vehicle is represented using a kinematic bicycle model. The model updates the vehicle's position and orientation based on its motion and steering inputs.
 
-# Install build, simulation, and controller dependencies
-sudo apt update && sudo apt install -y python3-colcon-common-extensions \
-  python3-numpy python3-scipy ros-humble-robot-state-publisher \
-  ros-humble-rviz2 ros-humble-xacro
+**2. Teleoperation Bridge**
 
-# Build the workspace (bicycle_sim, bicycle_control, track_environment)
-cd /path/to/bicycle_gym-main
-colcon build --symlink-install
-source install/setup.bash
-```
+The teleoperation bridge connects keyboard input to the vehicle's control interface, allowing the vehicle to be driven manually.
 
-In every new terminal, source the ROS distribution and built workspace:
+**3. Longitudinal PID Controller**
 
-```bash
-source /opt/ros/humble/setup.bash
-cd /path/to/bicycle_gym-main
-source install/setup.bash
-```
+The longitudinal controller adjusts the throttle command based on the difference between target speed and actual speed.
 
-### 2. Launch Modes
+**4. Velocity Profiler**
 
-| Mode | Launch Command | Section |
-|---|---|---|
-| **Base Simulation (CLI Testing)** | `ros2 launch bicycle_sim bicycle_sim.launch.py` | Milestones 1 & 2 |
-| **Interactive Keyboard Teleop** | `ros2 launch bicycle_sim bicycle_sim.launch.py controller:=teleop` | Milestones 3 & 4 |
-| **Lateral PID (Reactive)** | `ros2 launch bicycle_sim bicycle_sim.launch.py controller:=lateral_pid` | Milestone 5.2 |
-| **Pure Pursuit (Geometric Preview)**| `ros2 launch bicycle_sim bicycle_sim.launch.py controller:=pure_pursuit` | Milestone 5.3 |
-| **Extended Kinematic MPC (Optimal Preview)** | `ros2 launch bicycle_sim bicycle_sim.launch.py controller:=mpc` | Milestone 5.4 |
+The velocity profiler limits the target speed according to the road curvature and a configured lateral acceleration limit.
 
-For keyboard teleoperation, start the keyboard driver in a second sourced terminal:
+**5. Lateral PID Controller**
 
-```bash
-sudo apt install -y ros-humble-teleop-twist-keyboard
-ros2 run teleop_twist_keyboard teleop_twist_keyboard
-```
+The lateral controller uses cross-track error to calculate a steering correction that helps the vehicle follow the reference path.
 
-To request closed-loop cruise control in teleoperation mode:
+## 4. Implementation
 
-```bash
-ros2 launch bicycle_sim bicycle_sim.launch.py controller:=teleop use_cruise_control:=true
-```
+### Milestone 1 — ROS 2 Exploration
 
-The launch file also supports `rviz:=false` and `analyzer:=false` to disable those nodes. For example:
+This milestone focuses on understanding the existing ROS 2 system before modifying the control behavior.
 
-```bash
-ros2 launch bicycle_sim bicycle_sim.launch.py controller:=pure_pursuit rviz:=false
-```
+The main tasks include inspecting available nodes and topics, identifying the vehicle state and actuator interfaces, and understanding how messages move between components.
 
-### 3. Inspecting the ROS Graph
-
-Run these commands from a second sourced terminal while the simulation is running:
+Useful ROS 2 commands include:
 
 ```bash
 ros2 node list
@@ -98,222 +76,251 @@ ros2 topic list
 ros2 topic info /state
 ros2 topic info /throttle
 ros2 topic info /steer
-ros2 interface show nav_msgs/msg/Odometry
-ros2 interface show std_msgs/msg/Float32
-ros2 interface show geometry_msgs/msg/Twist
 ros2 topic echo /state
 ```
 
-### 4. Direct Actuator Testing
+These commands help identify the available interfaces and inspect the information exchanged by the simulation.
 
-With the base simulation running, send actuator commands from another sourced terminal. Throttle/brake uses `[-1.0, 1.0]`; steering is in radians, with positive values turning left.
+### Milestone 2 — Kinematic Bicycle Model
 
-```bash
-ros2 topic pub --once /throttle std_msgs/msg/Float32 "{data: 0.5}"
-ros2 topic pub --once /steer std_msgs/msg/Float32 "{data: 0.30}"
-ros2 topic pub --once /throttle std_msgs/msg/Float32 "{data: -1.0}"
+The kinematic bicycle model approximates a vehicle using its wheelbase, longitudinal velocity, steering angle, position, and heading.
+
+For a simplified rear-axle reference model, the continuous-time equations are:
+
+$$
+\dot{x}=v\cos(\psi)
+$$
+
+$$
+\dot{y}=v\sin(\psi)
+$$
+
+$$
+\dot{\psi}=\frac{v}{L}\tan(\delta)
+$$
+
+Where:
+
+* \(x,y\): Vehicle position in the global coordinate frame.
+* \(v\): Longitudinal velocity.
+* \(\psi\): Vehicle heading angle.
+* \(L\): Wheelbase.
+* \(\delta\): Front-wheel steering angle.
+
+The equations describe how the vehicle moves forward and changes its heading when steering. The model can be numerically integrated using Euler integration:
+
+$$
+x_{k+1}=x_k+\dot{x}_k\Delta t
+$$
+
+$$
+y_{k+1}=y_k+\dot{y}_k\Delta t
+$$
+
+$$
+\psi_{k+1}=\psi_k+\dot{\psi}_k\Delta t
+$$
+
+Here, \(\Delta t\) is the simulation time step.
+
+### Milestone 3 — Teleoperation
+
+This milestone introduces manual control of the simulated vehicle through keyboard commands.
+
+The teleoperation bridge converts user input into commands for vehicle motion, allowing basic forward, reverse, and steering behavior to be explored through the available control interfaces.
+
+Manual control provides a baseline for understanding how throttle and steering affect the vehicle before introducing autonomous feedback controllers.
+
+### Milestone 4 — Longitudinal PID Control
+
+Longitudinal control regulates the vehicle's speed by comparing the target speed with the measured speed.
+
+The speed error is:
+
+$$
+e_v(t)=v_{\text{target}}(t)-v_{\text{actual}}(t)
+$$
+
+The PID controller computes its control output using proportional, integral, and derivative terms:
+
+$$
+u(t)=K_p e_v(t)+K_i\int_0^t e_v(\tau)\,d\tau+K_d\frac{de_v(t)}{dt}
+$$
+
+Where:
+
+* \(K_p\): Proportional gain.
+* \(K_i\): Integral gain.
+* \(K_d\): Derivative gain.
+* \(u(t)\): Controller output used to adjust the longitudinal command.
+
+The proportional term responds to the current speed error, the integral term accounts for accumulated error, and the derivative term responds to how quickly the error changes.
+
+The purpose is to make the vehicle track a desired speed instead of relying entirely on manually chosen throttle commands.
+
+### Milestone 5.1 — Curvature-Based Velocity Profiling
+
+The velocity profiler calculates a target speed based on road curvature and a lateral acceleration limit.
+
+For a vehicle following a curved path, lateral acceleration can be approximated by:
+
+$$
+a_y=v^2|\kappa|
+$$
+
+Where:
+
+* \(a_y\): Lateral acceleration.
+* \(v\): Vehicle speed.
+* \(\kappa\): Path curvature.
+
+Applying a maximum allowed lateral acceleration gives the curvature-based speed limit:
+
+$$
+v_{\text{curve}}=\sqrt{\frac{a_{y,\max}}{|\kappa|}}
+$$
+
+A tighter curve has a larger curvature magnitude and therefore requires a lower speed to respect the same lateral acceleration limit.
+
+For approximately straight sections, curvature approaches zero and this formula does not impose a finite speed limit. The profiler therefore uses the configured maximum speed for sufficiently small curvature.
+
+The target speed can also be limited by a fallback speed, when supplied:
+
+$$
+v_{\text{target}}=
+\min(v_{\text{curve}},v_{\text{fallback}},v_{\max})
+$$
+
+This expression applies when a fallback speed is provided and curvature is sufficiently large. Otherwise, the profiler follows its corresponding straight-section or fallback logic.
+
+### Milestone 5.2 — Lateral PID Control
+
+Lateral control aims to reduce the distance between the vehicle and its reference path.
+
+The lateral PID controller uses the cross-track error (CTE) to determine a steering correction.
+
+A general PID expression is:
+
+$$
+u(t)=K_p e(t)+K_i\int_0^t e(\tau)\,d\tau+K_d\frac{de(t)}{dt}
+$$
+
+Where \(e(t)\) represents the controller's error signal and \(u(t)\) represents its control output. In lateral control, the error is associated with the vehicle's deviation from the reference path.
+
+The three terms have different roles:
+
+* **Proportional:** Responds to the current deviation.
+* **Integral:** Accounts for accumulated error.
+* **Derivative:** Responds to the rate of change of the error.
+
+The resulting steering correction is used to guide the vehicle toward the reference path. Controller behavior depends on the gain values, vehicle dynamics, and the way the error signal is defined.
+
+## 5. Software Structure
+
+The main implementation files are organized as follows:
+
+```text
+Control_Project/
+├── bicycle_control/
+│   ├── bicycle_control/
+│   │   ├── controller_node.py
+│   │   ├── lateral_pid.py
+│   │   ├── longitudinal_pid.py
+│   │   ├── teleop_bridge.py
+│   │   └── velocity_profiler.py
+│   └── test/
+│       ├── test_lateral_pid.py
+│       ├── test_longitudinal_pid.py
+│       └── test_velocity_profiler.py
+├── bicycle_sim/
+│   ├── bicycle_sim/
+│   │   └── bicycle_model.py
+│   └── test/
+│       └── test_bicycle_model.py
+├── track_environment/
+│   ├── track_environment/
+│   └── test/
+└── README.md
 ```
 
-### 5. Real-Time Telemetry & Graphing
+The structure separates vehicle simulation, control algorithms, and track-related functionality. This makes the components easier to understand and maintain independently.
+
+## 6. Building the Workspace
+
+The project uses ROS 2 and `colcon` to build its packages.
+
+From the project root, run:
+
 ```bash
-# Install plotting and telemetry visualization tools
-sudo apt update && sudo apt install -y ros-humble-plotjuggler-ros rqt-plot
-
-# Inspect live signals in rqt_plot:
-ros2 run rqt_plot rqt_plot /telemetry/cte /telemetry/speed
-
-# Or launch PlotJuggler for multi-topic time-series analysis:
-ros2 run plotjuggler plotjuggler
+source /opt/ros/humble/setup.bash
+colcon build --symlink-install
+source install/setup.bash
 ```
 
-Some telemetry topics are only available after the corresponding analyzer work is complete.
+The build command compiles the packages in the workspace and creates the environment needed to run them.
+
+## 7. Running the Simulation
+
+To launch the base vehicle simulation:
+
+```bash
+ros2 launch bicycle_sim bicycle_sim.launch.py
+```
+
+To launch the simulation with the lateral PID controller, use the controller configuration supported by the project's launch file:
+
+```bash
+ros2 launch bicycle_sim bicycle_sim.launch.py controller:=lateral_pid
+```
+
+The lateral PID configuration is the final control milestone included in this project report.
+
+## 8. Testing and Validation
+
+Testing is used to check individual components and identify implementation issues.
+
+The project includes test files for the bicycle model, longitudinal PID, lateral PID, and velocity profiler, as well as tests for additional controllers.
+
+The recorded test results include:
+
+* The targeted lateral PID test passed.
+* A broader test run of `bicycle_control` reported three failures and one skipped test. That run included tests for controllers outside the current project scope, so the complete test suite cannot be described as passing.
+
+These results are reported separately to avoid confusing a successful targeted test with complete validation of the whole package.
+
+A successful build confirms that the workspace can be built; it does not by itself prove that the vehicle follows the reference path correctly under every condition.
+
+## 9. Current Scope and Limitations
+
+The current implementation and report cover the project through Milestone 5.2.
+
+| Milestone | Topic                                      | Scope status          |
+| --------- | ------------------------------------------ | --------------------- |
+| 1         | ROS 2 exploration                          | Included              |
+| 2         | Kinematic bicycle model                    | Included              |
+| 3         | Teleoperation bridge                       | Included              |
+| 4         | Longitudinal PID                           | Included              |
+| 5.1       | Curvature-based velocity profiling         | Included              |
+| 5.2       | Lateral PID                                | Included              |
+| 5.3       | Pure Pursuit                               | Outside current scope |
+| 5.4       | Model Predictive Control (MPC)             | Outside current scope |
+| 5.5       | Lap analysis and benchmarking              | Outside current scope |
+| 6 onward  | Further exploration and later deliverables | Outside current scope |
+
+The current report does not claim measured lap times, completed autonomous laps, benchmark comparisons, or performance improvements without corresponding results.
+
+## 10. Conclusion
+
+This project develops an understanding of autonomous vehicle control by progressing from ROS 2 system exploration to vehicle modeling, manual control, and feedback-based control.
+
+The kinematic bicycle model provides a simplified description of vehicle motion. The longitudinal PID controller regulates speed, the velocity profiler relates road curvature to a safe target speed, and the lateral PID controller calculates steering corrections based on path deviation.
+
+Together, these components establish the foundation for an autonomous vehicle control pipeline. Further controller implementations and performance evaluation remain outside the current project scope.
 
 ---
 
-## 🎯 Milestones at a Glance
+## Author
 
-- **Milestone 1**: Topic Discovery, Graph Inspection & Telemetry Plotting (`ros2 topic list / info`, `rqt_plot`, `plotjuggler`)
-- **Milestone 2**: Extended Kinematic Bicycle Model & Euler Integration (`src/bicycle_sim/bicycle_sim/bicycle_model.py`)
-- **Milestone 3**: Teleoperation Bridge & Open-Loop Driving (`src/bicycle_control/bicycle_control/teleop_bridge.py`)
-- **Milestone 4**: Low-Level Powertrain Cruise Control (`src/bicycle_control/bicycle_control/longitudinal_pid.py`)
-- **Milestone 5**: Autonomous Path Tracking — It's Time to Get the Car to Drive Autonomously!
-  - **5.1**: High-Level Velocity Profiler & Path Curvature (`src/bicycle_control/bicycle_control/velocity_profiler.py`)
-  - **5.2**: Steer Using Reactive Feedback (`src/bicycle_control/bicycle_control/lateral_pid.py`)
-  - **5.3**: Steer Using Geometric Preview (`src/bicycle_control/bicycle_control/pure_pursuit.py`)
-  - **5.4**: Steer Using Constrained Optimal Preview (Extended Kinematic MPC) (`src/bicycle_control/bicycle_control/mpc.py`)
-  - **5.5**: Real-Time Telemetry, Graphing & RViz Dashboard Engineering (`src/track_environment/track_environment/lap_analyzer.py`)
-- **Milestone 6**: Free Exploration & Reference Resources (Ackermann Kinematics, 3D Simulation, Nav2 MPPI)
-- **Milestone 7**: Deliverable 1 — Repository Documentation (`README.md` Benchmark Report)
-- **Milestone 8**: Deliverable 2 — Technical Video Walkthrough (3–5 Minute Demo)
-
----
-## Milestone 6: Free Exploration & Reference Resources
-
-To connect your work in this lab to industrial autonomous vehicle systems, modern simulators, and production ROS 2 frameworks, explore the following organized learning resources. These materials illustrate how the 2D planar kinematic bicycle model extends into multi-body dynamics, 3D physics engines, and advanced sampling-based predictive control.
-
----
-
-### 1. Four-Wheel Ackermann Kinematics & `ros2_control`
-*Explore multi-body steering geometry and industrial ROS 2 controller architectures.*
-
-In a physical 4-wheel vehicle navigating a turn, the inside front wheel must turn sharper than the outside wheel because it follows a smaller turning radius ($R - W/2$ vs $R + W/2$). Forcing both wheels to the same angle causes tire scrub, tread wear, and energy loss.
-
-$$\tan\delta_{inner} = \frac{L}{R - \frac{W}{2}}, \quad \tan\delta_{outer} = \frac{L}{R + \frac{W}{2}}$$
-
-#### Curated Resources:
-- [ROS 2 Control Mobile Robot Kinematics Guide](https://control.ros.org/humble/doc/ros2_controllers/doc/mobile_robot_kinematics.html) — Guide on modeling 4-wheel kinematics and visualizing full car models instead of simplified bicycle models.
-- [ROS 2 Steering Controllers Library](https://control.ros.org/kilted/doc/ros2_controllers/steering_controllers_library/doc/userdoc.html) — Official documentation for Ackermann and bicycle steering controllers in `ros2_control`.
-- [ros2_control_demos Example 11: Steered Wheel Base](https://control.ros.org/humble/doc/ros2_control_demos/example_11/doc/userdoc.html) — Industrial demonstration of steered-wheel bases and hardware interfaces.
-- [ros2_control_demos Repository](https://github.com/ros-controls/ros2_control_demos) — Comprehensive reference suite for `ros2_control` implementations.
-- [ROS 2 Controllers Official Repository](https://github.com/ros-controls/ros2_controllers/tree/master) — Upstream implementations of vehicle and chassis controllers.
-- [Four-Wheel AMR Reference Implementation](https://github.com/abubakar-mughal97/four_wheel_amr) — 4-wheel mobile robot package with Ackermann steering.
-
----
-
-### 2. Modern 3D Simulation Environments (Gazebo & MVSim)
-*Bridge the gap between 2D planar kinematics and full 3D physics engines with tire friction dynamics.*
-
-While kinematic models assume zero tire slip, physical vehicles experience tire deflection and friction saturation (Pacejka Magic Formula). 3D physics engines simulate suspension compliance, tire contact patches, sensor noise, and terrain.
-
-#### Curated Resources:
-- [Ackermann Vehicle in Modern Gazebo (Gz-Sim) & ROS 2](https://github.com/alitekes1/ackermann-vehicle-gzsim-ros2) ([Main Branch](https://github.com/alitekes1/ackermann-vehicle-gzsim-ros2/tree/main)) — Autonomous Ackermann vehicle simulation using modern Gazebo (Gz-Sim / Ignition) and ROS 2.
-- [Classic Gazebo Ackermann Simulation](https://github.com/lucasmazzetto/gazebo_ackermann_steering_vehicle) — Classic Gazebo simulation showcasing physical Ackermann steering linkages.
-- [Ackermann Autonomous Car Simulation](https://github.com/armando-genis/Ackermann-Autonomous-Car-Simulation) — Autonomous driving stack with Ackermann kinematics in simulation.
-- [MVSim — Multi-Vehicle Simulator for ROS 2 Humble](https://docs.ros.org/en/humble/Tutorials/Advanced/Simulators/MVSim/Simulation-MVSim.html) — Lightweight, fast multi-vehicle dynamic simulator tailored for mobile robots and autonomous vehicles.
-
----
-
-### 3. Stochastic Sampling-Based Predictive Control (Nav2 MPPI)
-*Explore model predictive path integral control for non-linear vehicle systems.*
-
-Model Predictive Path Integral (MPPI) control is an advanced algorithm that generates thousands of randomized candidate trajectories in parallel (using GPU or multi-core CPU) and averages them using path integral weighting to produce optimal controls without needing gradient-based solvers.
-
-#### Curated Resources:
-- [Nav2 MPPI Controller](https://index.ros.org/p/nav2_mppi_controller/) — Production real-time MPPI controller package in the ROS 2 Navigation stack with dynamic obstacle avoidance and customizable cost functions.
-
----
-
-### 💡 Synthesis Task for Your Report:
-In your `README.md` report, synthesize your takeaways from exploring these organized resources:
-1. **Kinematics vs Multi-Body**: How 4-wheel Ackermann kinematics accounts for differing inner and outer wheel turning radii ($\delta_{inner}$ vs $\delta_{outer}$), and how this is modeled in `ros2_control`.
-2. **2D vs 3D Simulation**: The computational and modeling trade-offs between lightweight 2D kinematic simulation and full 3D physics engines (Gazebo / MVSim).
-3. **Deterministic vs Sampling Control**: How modern sampling-based controllers (Nav2 MPPI) differ in flexibility, obstacle handling, and compute requirements compared to deterministic optimization (MPC).
-
----
-## 🏆 Telemetry Benchmark Leaderboard
-
-*(To be completed by the student as part of Milestone 7)*
-
-| Controller Mode | Best Lap Time (s) | Top Speed (m/s) | Mean CTE (m) | Max CTE (m) | RMS CTE (m) | Laps Completed / Status |
-|---|---|---|---|---|---|---|
-| **Manual Teleoperation** | — | — | — | — | — | — |
-| **Lateral PID (Reactive)** | — | — | — | — | — | — |
-| **Pure Pursuit (Preview)** | — | — | — | — | — | — |
-| **Extended Kinematic MPC (Optimal)** | — | — | — | — | — | — |
-
----
-
----
-
-## Project Report — Autonomous Vehicle Control
-
-### Project Overview
-This project explores autonomous vehicle control using ROS 2 and a
-kinematic bicycle model. It brings together vehicle simulation, path
-tracking, longitudinal speed control, and steering control in a modular
-software architecture.
-
-### System Architecture
-The project is organized into three ROS 2 packages:
-
-- `track_environment`: track and environment functionality.
-- `bicycle_sim`: vehicle model and simulation configuration.
-- `bicycle_control`: control algorithms and vehicle command generation.
-
-This modular structure separates the environment, vehicle dynamics, and
-control logic, making individual components easier to develop and evaluate.
-
-### Velocity Profiling
-Velocity profiling determines a suitable target speed along a path.
-The target speed can account for vehicle speed limits and path curvature.
-For a curvature-limited profile, the relationship between speed and lateral
-acceleration is:
-
-\[
-v_{\max} = \sqrt{\frac{a_{y,\max}}{|\kappa|}}
-\]
-
-where \(a_{y,\max}\) is the allowed lateral acceleration and \(\kappa\)
-is the path curvature. Tighter turns require lower speeds to limit
-lateral acceleration.
-
-### Lateral PID Control
-The Lateral PID controller calculates a steering command using tracking
-error and heading error. Its proportional, integral, and derivative terms
-help correct the vehicle's deviation from the reference path.
-
-The general PID structure is:
-
-\[
-u(t)=K_p e(t)+K_i\int e(t)\,dt+K_d\frac{de(t)}{dt}
-\]
-
-In vehicle path tracking, steering direction and heading-error feedback
-are chosen according to the controller's sign conventions. Output limits
-help keep the steering command within the configured range.
-
-### Path-Tracking Controller Concepts
-
-**Lateral PID:** Uses feedback from the current tracking error. It is
-straightforward to implement and tune, and its behavior depends on the
-controller gains and operating conditions.
-
-**Pure Pursuit:** Selects a target point ahead of the vehicle and calculates
-steering geometrically to guide the vehicle toward that point. Lookahead
-distance is an important tuning parameter: it affects responsiveness and
-cornering behavior.
-
-**Model Predictive Control (MPC):** Predicts future vehicle motion over a
-finite horizon and optimizes control inputs according to a cost function.
-It can incorporate constraints and balance tracking accuracy with control
-effort, at the cost of greater computational requirements and dependence
-on the prediction model and tuning.
-
-### Simulation and Vehicle Modeling
-A kinematic bicycle model represents the vehicle using a simplified
-two-wheel equivalent. This makes it useful for studying vehicle motion
-and control without the computational complexity of a detailed multi-body
-model.
-
-A conventional form of the model is:
-
-\[
-\dot{x}=v\cos\psi,\qquad \dot{y}=v\sin\psi
-\]
-
-\[
-\dot{\psi}=\frac{v}{L}\tan\delta
-\]
-
-where \(x,y\) describe position, \(v\) is vehicle speed, \(\psi\) is heading,
-\(L\) is wheelbase, and \(\delta\) is steering angle.
-
-### Further Exploration
-The project resources introduce several broader ideas:
-
-- **Ackermann kinematics:** describes the geometric relationship between
-  the inner and outer wheels when a vehicle turns.
-- **2D and 3D simulation:** lightweight kinematic simulation is useful for
-  rapid controller development, while 3D simulation can represent more
-  detailed vehicle and environmental behavior.
-- **Deterministic and sampling-based control:** optimization-based methods
-  such as MPC use a model and objective function, while sampling-based
-  approaches such as Nav2 MPPI evaluate candidate control sequences to
-  identify useful actions.
-
-### Conclusion
-This project brings together ROS 2 software organization, vehicle modeling,
-speed profiling, and path-tracking control. Comparing feedback-based,
-geometric, and predictive control approaches provides a foundation for
-understanding how autonomous vehicles follow a reference path and how
-controller design influences vehicle behavior.
+**Raghad Mohamed**
+Ain Shams University
+Autonomous Racing Lab (ARL) — Individual Control Project
