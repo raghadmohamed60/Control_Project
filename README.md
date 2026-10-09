@@ -210,3 +210,110 @@ In your `README.md` report, synthesize your takeaways from exploring these organ
 | **Lateral PID (Reactive)** | — | — | — | — | — | — |
 | **Pure Pursuit (Preview)** | — | — | — | — | — | — |
 | **Extended Kinematic MPC (Optimal)** | — | — | — | — | — | — |
+
+---
+
+---
+
+## Project Report — Autonomous Vehicle Control
+
+### Project Overview
+This project explores autonomous vehicle control using ROS 2 and a
+kinematic bicycle model. It brings together vehicle simulation, path
+tracking, longitudinal speed control, and steering control in a modular
+software architecture.
+
+### System Architecture
+The project is organized into three ROS 2 packages:
+
+- `track_environment`: track and environment functionality.
+- `bicycle_sim`: vehicle model and simulation configuration.
+- `bicycle_control`: control algorithms and vehicle command generation.
+
+This modular structure separates the environment, vehicle dynamics, and
+control logic, making individual components easier to develop and evaluate.
+
+### Velocity Profiling
+Velocity profiling determines a suitable target speed along a path.
+The target speed can account for vehicle speed limits and path curvature.
+For a curvature-limited profile, the relationship between speed and lateral
+acceleration is:
+
+\[
+v_{\max} = \sqrt{\frac{a_{y,\max}}{|\kappa|}}
+\]
+
+where \(a_{y,\max}\) is the allowed lateral acceleration and \(\kappa\)
+is the path curvature. Tighter turns require lower speeds to limit
+lateral acceleration.
+
+### Lateral PID Control
+The Lateral PID controller calculates a steering command using tracking
+error and heading error. Its proportional, integral, and derivative terms
+help correct the vehicle's deviation from the reference path.
+
+The general PID structure is:
+
+\[
+u(t)=K_p e(t)+K_i\int e(t)\,dt+K_d\frac{de(t)}{dt}
+\]
+
+In vehicle path tracking, steering direction and heading-error feedback
+are chosen according to the controller's sign conventions. Output limits
+help keep the steering command within the configured range.
+
+### Path-Tracking Controller Concepts
+
+**Lateral PID:** Uses feedback from the current tracking error. It is
+straightforward to implement and tune, and its behavior depends on the
+controller gains and operating conditions.
+
+**Pure Pursuit:** Selects a target point ahead of the vehicle and calculates
+steering geometrically to guide the vehicle toward that point. Lookahead
+distance is an important tuning parameter: it affects responsiveness and
+cornering behavior.
+
+**Model Predictive Control (MPC):** Predicts future vehicle motion over a
+finite horizon and optimizes control inputs according to a cost function.
+It can incorporate constraints and balance tracking accuracy with control
+effort, at the cost of greater computational requirements and dependence
+on the prediction model and tuning.
+
+### Simulation and Vehicle Modeling
+A kinematic bicycle model represents the vehicle using a simplified
+two-wheel equivalent. This makes it useful for studying vehicle motion
+and control without the computational complexity of a detailed multi-body
+model.
+
+A conventional form of the model is:
+
+\[
+\dot{x}=v\cos\psi,\qquad \dot{y}=v\sin\psi
+\]
+
+\[
+\dot{\psi}=\frac{v}{L}\tan\delta
+\]
+
+where \(x,y\) describe position, \(v\) is vehicle speed, \(\psi\) is heading,
+\(L\) is wheelbase, and \(\delta\) is steering angle.
+
+### Further Exploration
+The project resources introduce several broader ideas:
+
+- **Ackermann kinematics:** describes the geometric relationship between
+  the inner and outer wheels when a vehicle turns.
+- **2D and 3D simulation:** lightweight kinematic simulation is useful for
+  rapid controller development, while 3D simulation can represent more
+  detailed vehicle and environmental behavior.
+- **Deterministic and sampling-based control:** optimization-based methods
+  such as MPC use a model and objective function, while sampling-based
+  approaches such as Nav2 MPPI evaluate candidate control sequences to
+  identify useful actions.
+
+### Conclusion
+This project brings together ROS 2 software organization, vehicle modeling,
+speed profiling, and path-tracking control. Comparing feedback-based,
+geometric, and predictive control approaches provides a foundation for
+understanding how autonomous vehicles follow a reference path and how
+controller design influences vehicle behavior.
