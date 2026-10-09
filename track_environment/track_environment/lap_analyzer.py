@@ -257,25 +257,23 @@ class LapAnalyzer(Node):
 
     def publish_telemetry(self):
         """Periodically publishes numerical telemetry and RViz visual markers at 10 Hz."""
-        # ======================================================================
-        # TODO: Telemetry Publishing for Graphing (PlotJuggler / rqt_plot) & Logging
-        #
-        # 1. Real-Time Numerical Signals (for rqt_plot / PlotJuggler):
-        #    Publish individual Float32 messages so students can graph signals live:
-        #      - self.cte_pub -> self.current_cte
-        #      - self.speed_pub -> self.current_speed
-        #      - self.heading_err_pub -> math.degrees(self.current_heading_err)
-        #      - self.lap_time_pub -> self.current_lap_time
-        #
-        # 2. JSON Telemetry Message:
-        #    Assemble a telemetry dictionary (lap, current_lap_time, last_lap_time,
-        #    best_lap_time, speed, current_cte, rms_cte, heading_err_deg) and publish
-        #    it as a serialized JSON String to self.metrics_pub.
-        #
-        # 3. Visual Telemetry (RViz):
-        #    Pass the telemetry dict to self.publish_rviz_markers(telemetry).
-        # ======================================================================
-        # Baseline start-gate visualization hook
+
+        self.cte_pub.publish(
+            Float32(data=float(self.current_cte))
+        )
+
+        self.speed_pub.publish(
+            Float32(data=float(self.current_speed))
+        )
+
+        self.heading_err_pub.publish(
+            Float32(data=float(math.degrees(self.current_heading_err)))
+        )
+
+        self.lap_time_pub.publish(
+            Float32(data=float(self.current_lap_time))
+        )
+
         self.publish_rviz_markers()
 
     def publish_rviz_markers(self, telemetry=None):

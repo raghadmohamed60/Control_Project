@@ -1,21 +1,19 @@
-"""
-High-Level Lateral Steering Controller: Reactive Lateral PID.
-Steers based on instantaneous Cross-Track Error (CTE) and Heading Error.
-"""
-
 import math
-import numpy as np  # noqa: F401
+
+import numpy as np
 
 
 class LateralPIDController:
-    """Lateral PID steering controller based on Cross-Track Error (CTE) and Heading Error.
-
-    Commands front wheel steering based on instantaneous lateral offset (cross-track error)
-    and orientation error relative to the nearest path waypoint.
-    """
-
-    def __init__(self, kp=0.8, ki=0.02, kd=0.15, k_yaw=0.5, dt=0.1,
-                 max_steer_rad=math.radians(35.0), integral_limit=1.0):
+    def __init__(
+        self,
+        kp=0.8,
+        ki=0.02,
+        kd=0.15,
+        k_yaw=0.5,
+        dt=0.1,
+        max_steer_rad=math.radians(35.0),
+        integral_limit=1.0,
+    ):
         self.kp = kp
         self.ki = ki
         self.kd = kd
@@ -23,28 +21,35 @@ class LateralPIDController:
         self.dt = dt
         self.max_steer_rad = max_steer_rad
         self.integral_limit = integral_limit
-
         self.integral_cte = 0.0
         self.prev_cte = 0.0
 
     def compute_steering(self, cte, heading_err):
-        """Computes front wheel steering angle delta in radians.
+        error = cte
+        self.integral_cte += error * self.dt
+        self.integral_cte = np.clip(
+            self.integral_cte,
+            -self.integral_limit,
+            self.integral_limit,
+        )
+        derivative = (error - self.prev_cte) / self.dt
 
-        Args:
-            cte: Signed cross-track error in meters (positive = vehicle is left of path).
-            heading_err: Heading error in radians (psi_vehicle - psi_path).
+        steering = (
+            0.0
+            - self.kp * error
+            - self.ki * self.integral_cte
+            - self.kd * derivative
+            - self.k_yaw * heading_err
+        )
 
-        Returns:
-            delta_rad: Commanded front steering angle in radians [-max_steer_rad, max_steer_rad].
-        """
-        # TODO: Milestone 5.2 — Reactive Lateral PID Controller
-        # This is the lateral steering controller. It corrects for how far the car
-        # is off the path (CTE) and how misaligned its heading is.
-        # Implement PID on the CTE with anti-windup, add a heading correction term,
-        # and clamp the output to the steering limits.
-        pass
+        self.prev_cte = error
+        steering = np.clip(
+            steering,
+            -self.max_steer_rad,
+            self.max_steer_rad,
+        )
+        return float(steering)
 
     def reset(self):
-        """Resets integrator and previous error state."""
         self.integral_cte = 0.0
         self.prev_cte = 0.0
